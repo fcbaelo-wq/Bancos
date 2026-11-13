@@ -1,0 +1,717 @@
+<!-- ... existing code ... -->
+                    <div>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <h1 class="text-xl sm:text-2xl font-extrabold tracking-tight text-white">Bancs de Survie</h1>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-400/30">
+                                Guide Officiel
+                            </span>
+                        </div>
+                        <p class="text-xs sm:text-sm text-slate-300 mt-0.5">Répertoire tactique de bancs pendant le shopping.</p>
+                    </div>
+                </div>
+<!-- ... existing code ... -->
+            <!-- Barre de Statistiques Rapides -->
+            <div class="grid grid-cols-3 gap-2.5 sm:gap-3.5 mt-4 pt-4 border-t border-white/10">
+                <div class="bg-white/5 backdrop-blur-sm rounded-xl p-2.5 sm:p-3 flex items-center gap-3 border border-white/5">
+                    <div class="w-9 h-9 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0">
+                        <i class="ph-fill ph-map-pin text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-[11px] text-slate-400 font-medium">Bancs recensés</p>
+                        <p id="stat-total" class="text-lg sm:text-xl font-extrabold text-white">0</p>
+                    </div>
+                </div>
+                <div class="bg-white/5 backdrop-blur-sm rounded-xl p-2.5 sm:p-3 flex items-center gap-3 border border-white/5">
+                    <div class="w-9 h-9 rounded-lg bg-yellow-500/20 text-yellow-400 flex items-center justify-center shrink-0">
+                        <i class="ph-fill ph-star text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-[11px] text-slate-400 font-medium">Confort moyen</p>
+                        <p id="stat-avg" class="text-lg sm:text-xl font-extrabold text-yellow-400">0.0</p>
+                    </div>
+                </div>
+                <div class="bg-white/5 backdrop-blur-sm rounded-xl p-2.5 sm:p-3 flex items-center gap-3 border border-white/5">
+                    <div class="w-9 h-9 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+                        <i class="ph-fill ph-chair text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-[11px] text-slate-400 font-medium">Avec dossier</p>
+                        <p id="stat-backrest" class="text-lg sm:text-xl font-extrabold text-emerald-400">0</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Contenu Principal -->
+    <main class="flex-1 max-w-6xl w-full mx-auto px-4 py-6">
+        
+        <!-- Barre de Recherche, GPS Autour de moi et Filtres -->
+        <section class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-4 mb-6">
+            <div class="flex flex-col lg:flex-row gap-3">
+                <!-- Champ de recherche -->
+                <div class="relative flex-1">
+                    <i class="ph ph-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-lg"></i>
+                    <input 
+                        type="text" 
+                        id="search-input" 
+                        oninput="handleSearch(this.value)"
+                        placeholder="Rechercher une rue, un quartier, une enseigne (ex: Zara, Sephora, Mirabeau)..." 
+                        class="w-full pl-10 pr-10 py-2.5 bg-cream-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:bg-white transition-all"
+                    >
+                    <button id="clear-search" onclick="clearSearch()" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 cursor-pointer">
+                        <i class="ph-fill ph-x-circle text-lg"></i>
+                    </button>
+                </div>
+
+                <!-- Bouton Autour de moi & Tri -->
+                <div class="flex flex-wrap sm:flex-nowrap items-center gap-2 shrink-0">
+                    <button id="around-me-btn" onclick="activateAroundMe()" class="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white font-bold text-sm shadow-sm transition-all cursor-pointer">
+                        <i id="around-me-icon" class="ph-fill ph-navigation-arrow text-base"></i>
+                        <span id="around-me-text">📍 Autour de moi</span>
+                    </button>
+
+                    <button id="reset-gps-btn" onclick="resetGpsSort()" title="Désactiver le tri GPS" class="hidden px-3 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold text-xs transition-colors cursor-pointer">
+                        <i class="ph-bold ph-x"></i> GPS
+                    </button>
+
+                    <select id="sort-select" onchange="handleSort(this.value)" class="flex-1 sm:w-auto bg-cream-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer">
+                        <option value="newest">Plus récents</option>
+                        <option value="rating" selected>Meilleur confort (★)</option>
+                        <option value="shops">Plus de boutiques surveillées</option>
+                        <option value="distance">Plus proches (GPS)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Bannière d'état GPS (visible quand actif ou erreur) -->
+            <div id="gps-status-banner" class="hidden mt-3 px-3.5 py-2 rounded-xl text-xs font-medium flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                    <i id="gps-banner-icon" class="ph-fill ph-check-circle text-base"></i>
+                    <span id="gps-banner-text">Position GPS active</span>
+                </div>
+                <button onclick="resetGpsSort()" class="underline font-bold hover:opacity-80 cursor-pointer">Réinitialiser le tri</button>
+            </div>
+
+            <!-- Filtres Rapides -->
+            <div class="flex items-center gap-2 overflow-x-auto no-scrollbar pt-3 mt-3 border-t border-slate-100" id="filter-pills">
+                <button onclick="setFilter('all')" data-filter="all" class="filter-btn active shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer bg-slate-900 text-white shadow-sm">
+                    Tous
+                </button>
+                <button onclick="setFilter('backrest')" data-filter="backrest" class="filter-btn shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer bg-cream-100 text-slate-700 hover:bg-cream-200">
+                    <i class="ph-fill ph-chair text-forest-700"></i> Avec dossier
+                </button>
+                <button onclick="setFilter('shade')" data-filter="shade" class="filter-btn shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer bg-cream-100 text-slate-700 hover:bg-cream-200">
+                    <i class="ph-fill ph-umbrella text-sky-600"></i> À l'ombre
+                </button>
+                <button onclick="setFilter('trash')" data-filter="trash" class="filter-btn shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer bg-cream-100 text-slate-700 hover:bg-cream-200">
+                    <i class="ph-fill ph-trash text-emerald-600"></i> Poubelle proche
+                </button>
+                <button onclick="setFilter('top')" data-filter="top" class="filter-btn shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer bg-cream-100 text-slate-700 hover:bg-cream-200">
+                    <i class="ph-fill ph-crown text-amber-500"></i> Note 4★+
+                </button>
+            </div>
+        </section>
+<!-- ... existing code ... -->
+                <!-- 5. Réseau Mobile, Affluence & Proximités Stratégiques -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+                            Réseau / 4G-5G
+                        </label>
+                        <select id="field-network" class="w-full px-3.5 py-2.5 bg-cream-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-amber-500">
+                            <option value="excellent">📶 Excellent (5G / 4G+ fluide)</option>
+                            <option value="moyen">📶 Moyen (Navigation OK)</option>
+                            <option value="faible">📵 Faible (Prévoir un livre)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+                            Affluence / Tranquillité
+                        </label>
+                        <select id="field-traffic" class="w-full px-3.5 py-2.5 bg-cream-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-amber-500">
+                            <option value="calme">🧘 Calme / Discret</option>
+                            <option value="moyen" selected>🚶 Passage normal</option>
+                            <option value="passant">📢 Très passant</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Proximités Stratégiques -->
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+                        Proximités stratégiques
+                    </label>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="flex flex-wrap gap-2 items-center">
+                            <label class="inline-flex items-center gap-1.5 bg-cream-50 border border-slate-200 px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer hover:bg-cream-100">
+                                <input type="checkbox" id="prox-coffee" class="rounded text-amber-500 focus:ring-amber-500">
+                                <span>☕ Café proche</span>
+                            </label>
+                            <label class="inline-flex items-center gap-1.5 bg-cream-50 border border-slate-200 px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer hover:bg-cream-100">
+                                <input type="checkbox" id="prox-toilets" class="rounded text-amber-500 focus:ring-amber-500">
+                                <span>🚻 Toilettes</span>
+                            </label>
+                            <label class="inline-flex items-center gap-1.5 bg-cream-50 border border-slate-200 px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer hover:bg-cream-100">
+                                <input type="checkbox" id="prox-water" class="rounded text-amber-500 focus:ring-amber-500">
+                                <span>💧 Point d'eau</span>
+                            </label>
+                        </div>
+                        <input type="text" id="field-prox-detail" placeholder="Précision (ex: Café à 20m, WC galerie à 50m)..." class="w-full px-3.5 py-2 bg-cream-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-amber-500 focus:bg-white">
+                    </div>
+                </div>
+
+                <!-- 6. COORDONNÉES GPS & PLAN INTERACTIF DE LA RUE -->
+                <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
+                    <!-- Capture GPS -->
+                    <div class="bg-white p-3 rounded-xl border border-slate-200/90">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+                            <span class="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                                <i class="ph-fill ph-crosshair text-emerald-600 text-base"></i>
+                                Position GPS (pour « Autour de moi »)
+                            </span>
+                            <div class="flex items-center gap-2">
+                                <button type="button" onclick="captureGPS()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-colors cursor-pointer">
+                                    <i class="ph-bold ph-navigation-arrow"></i>
+                                    <span id="gps-btn-text">📍 Capturer ma position GPS actuelle</span>
+                                </button>
+                                <button type="button" onclick="clearGPSFields()" title="Effacer GPS" class="px-2 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold cursor-pointer">
+                                    Effacer
+                                </button>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-400 uppercase mb-0.5">Latitude</label>
+                                <input type="number" step="any" id="field-lat" placeholder="Ex: 43.2936" class="w-full px-3 py-1.5 bg-cream-50 border border-slate-200 rounded-lg text-xs font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-400 uppercase mb-0.5">Longitude</label>
+                                <input type="number" step="any" id="field-lng" placeholder="Ex: 5.3768" class="w-full px-3 py-1.5 bg-cream-50 border border-slate-200 rounded-lg text-xs font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Plan de la rue -->
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1">
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                                <i class="ph-fill ph-map-trifold text-amber-600 text-base"></i>
+                                Plan visuel de la rue
+                            </label>
+                            <p class="text-[11px] text-slate-500">Cliquez sur le plan pour placer le repère rouge exactement où se trouve le banc.</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <label class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-lg text-xs font-semibold cursor-pointer transition-colors shadow-2xs">
+                                <i class="ph-bold ph-image"></i>
+                                <span>Importer capture/photo</span>
+                                <input type="file" id="map-image-upload" accept="image/*" onchange="handleMapImageUpload(event)" class="hidden">
+                            </label>
+                            <button type="button" id="reset-map-bg-btn" onclick="resetMapToSchematic()" class="hidden px-2.5 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-xs font-semibold cursor-pointer">
+                                Plan par défaut
+                            </button>
+                        </div>
+                    </div>
+<!-- ... existing code ... -->
+                    <!-- Coordonnées sur plan -->
+                    <div class="flex items-center justify-between mt-1.5">
+                        <span id="pin-coords-label" class="text-[11px] font-mono text-slate-500">Repère sur plan : X 50% · Y 27%</span>
+                    </div>
+                    <input type="hidden" id="field-pin-x" value="50">
+                    <input type="hidden" id="field-pin-y" value="27">
+                </div>
+<!-- ... existing code ... -->
+        // Données initiales réalistes en français avec coordonnées GPS réelles
+        const DEFAULT_BENCHES = [
+            {
+                id: 'banc-1',
+                name: 'Rue Saint-Ferréol (angle Rue Grignan)',
+                zone: 'Centre-ville, Marseille',
+                rating: 4,
+                backrest: true,
+                shopsCount: 3,
+                shopsNames: 'Zara, Sephora, Pull&Bear',
+                trash: true,
+                shade: 'ombre',
+                network: 'excellent',
+                traffic: 'passant',
+                proximities: { coffee: true, toilets: false, water: false, detail: 'Café à 20m' },
+                lat: 43.2936,
+                lng: 5.3768,
+                pinX: 46,
+                pinY: 28,
+                customMapImage: null,
+                notes: 'Poste d’observation stratégique à l’angle. Dossier confortable, bien à l’ombre l’après-midi et café à 20 mètres.',
+                createdAt: Date.now() - 86400000 * 2
+            },
+            {
+                id: 'banc-2',
+                name: 'Cours Mirabeau (haut du cours)',
+                zone: 'Aix-en-Provence',
+                rating: 5,
+                backrest: true,
+                shopsCount: 4,
+                shopsNames: 'Massimo Dutti, Sandro, Maje, L\'Occitane',
+                trash: true,
+                shade: 'ombre',
+                network: 'excellent',
+                traffic: 'moyen',
+                proximities: { coffee: true, toilets: false, water: true, detail: 'Fontaine & terrasses à proximité' },
+                lat: 43.5269,
+                lng: 5.4497,
+                pinX: 32,
+                pinY: 27,
+                customMapImage: null,
+                notes: 'Le palace 5 étoiles sous les platanes. Vue imprenable sur 4 enseignes, fraîcheur garantie et poubelle juste à côté.',
+                createdAt: Date.now() - 86400000
+            },
+            {
+                id: 'banc-3',
+                name: 'Centre Commercial La Valentine (Allée centrale)',
+                zone: 'La Valentine, Marseille',
+                rating: 3,
+                backrest: false,
+                shopsCount: 2,
+                shopsNames: 'H&M, Etam',
+                trash: false,
+                shade: 'ombre',
+                network: 'moyen',
+                traffic: 'passant',
+                proximities: { coffee: false, toilets: true, water: false, detail: 'WC galerie à 50m' },
+                lat: 43.2905,
+                lng: 5.4812,
+                pinX: 68,
+                pinY: 73,
+                customMapImage: null,
+                notes: 'À l’abri à l’intérieur de la galerie, idéal par mauvais temps. Pas de dossier mais toilettes de la galerie à 50m.',
+                createdAt: Date.now()
+            }
+        ];
+
+        // État global
+        let benches = [];
+        let currentFilter = 'all';
+        let currentSearch = '';
+        let currentSort = 'rating';
+        let currentCustomMapDataUrl = null;
+        let pendingConfirmCallback = null;
+        let userLocation = null; // { lat, lng } quand "Autour de moi" est actif
+// ... existing code ...
+        // Mise à jour des statistiques d'en-tête
+        function updateStats() {
+            const total = benches.length;
+            const avg = total > 0
+                ? (benches.reduce((acc, b) => acc + Number(b.rating), 0) / total).toFixed(1)
+                : '0.0';
+            const backrestCount = benches.filter(b => b.backrest).length;
+
+            document.getElementById('stat-total').textContent = total;
+            document.getElementById('stat-avg').textContent = avg + ' ★';
+            document.getElementById('stat-backrest').textContent = backrestCount;
+        }
+
+        // Formule de Haversine pour calculer la distance en mètres entre deux coordonnées GPS
+        function calculateDistanceMeters(lat1, lon1, lat2, lon2) {
+            const R = 6371e3; // Rayon de la Terre en mètres
+            const toRad = deg => (deg * Math.PI) / 180;
+            const dLat = toRad(lat2 - lat1);
+            const dLon = toRad(lon2 - lon1);
+            const a =
+                Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+                Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return Math.round(R * c);
+        }
+
+        function formatDistance(meters) {
+            if (meters < 1000) {
+                return `À ${meters} m`;
+            }
+            const km = (meters / 1000).toFixed(1).replace('.', ',');
+            return `À ${km} km`;
+        }
+
+        // Activation du mode "Autour de moi"
+        function activateAroundMe() {
+            const btnText = document.getElementById('around-me-text');
+            const banner = document.getElementById('gps-status-banner');
+            const bannerIcon = document.getElementById('gps-banner-icon');
+            const bannerText = document.getElementById('gps-banner-text');
+
+            if (!navigator.geolocation) {
+                banner.className = 'mt-3 px-3.5 py-2 rounded-xl text-xs font-medium flex items-center justify-between gap-2 bg-red-50 text-red-700 border border-red-200';
+                bannerIcon.className = 'ph-fill ph-warning-circle text-base text-red-600';
+                bannerText.textContent = 'La géolocalisation n’est pas supportée par votre navigateur.';
+                return;
+            }
+
+            btnText.textContent = 'Localisation...';
+
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    userLocation = {
+                        lat: pos.coords.latitude,
+                        lng: pos.coords.longitude
+                    };
+                    btnText.textContent = '📍 Autour de moi';
+                    document.getElementById('reset-gps-btn').classList.remove('hidden');
+
+                    // Passer automatiquement au tri par distance
+                    currentSort = 'distance';
+                    document.getElementById('sort-select').value = 'distance';
+
+                    banner.className = 'mt-3 px-3.5 py-2 rounded-xl text-xs font-medium flex items-center justify-between gap-2 bg-emerald-50 text-emerald-800 border border-emerald-200';
+                    bannerIcon.className = 'ph-fill ph-navigation-arrow text-base text-emerald-600';
+                    bannerText.textContent = `Trié par proximité depuis votre position (${userLocation.lat.toFixed(4)}, ${userLocation.lng.toFixed(4)})`;
+
+                    renderBenches();
+                    showToast('Bancs triés du plus proche au plus éloigné !');
+                },
+                (err) => {
+                    btnText.textContent = '📍 Autour de moi';
+                    let msg = 'Impossible d’accéder à votre position GPS.';
+                    if (err.code === 1) msg = 'Accès à la position refusé. Autorisez la géolocalisation dans votre navigateur.';
+                    else if (err.code === 2) msg = 'Signal GPS indisponible pour le moment.';
+                    else if (err.code === 3) msg = 'Délai de recherche GPS dépassé.';
+
+                    banner.className = 'mt-3 px-3.5 py-2 rounded-xl text-xs font-medium flex items-center justify-between gap-2 bg-amber-50 text-amber-800 border border-amber-200';
+                    bannerIcon.className = 'ph-fill ph-warning text-base text-amber-600';
+                    bannerText.textContent = msg;
+                },
+                { enableHighAccuracy: true, timeout: 8000 }
+            );
+        }
+
+        function resetGpsSort() {
+            userLocation = null;
+            document.getElementById('gps-status-banner').classList.add('hidden');
+            document.getElementById('reset-gps-btn').classList.add('hidden');
+            if (currentSort === 'distance') {
+                currentSort = 'rating';
+                document.getElementById('sort-select').value = 'rating';
+            }
+            renderBenches();
+        }
+
+        // Filtrage et Tri
+        function getFilteredBenches() {
+            return benches
+                .map(b => {
+                    let distanceMeters = null;
+                    if (userLocation && b.lat != null && b.lng != null && b.lat !== '' && b.lng !== '') {
+                        distanceMeters = calculateDistanceMeters(
+                            userLocation.lat,
+                            userLocation.lng,
+                            Number(b.lat),
+                            Number(b.lng)
+                        );
+                    }
+                    return { ...b, _distanceMeters: distanceMeters };
+                })
+                .filter(b => {
+                    // Filtre pillule
+                    if (currentFilter === 'backrest' && !b.backrest) return false;
+                    if (currentFilter === 'shade' && b.shade !== 'ombre') return false;
+                    if (currentFilter === 'trash' && !b.trash) return false;
+                    if (currentFilter === 'top' && Number(b.rating) < 4) return false;
+
+                    // Recherche texte
+                    if (currentSearch.trim() !== '') {
+                        const q = currentSearch.toLowerCase();
+                        const matchName = (b.name || '').toLowerCase().includes(q);
+                        const matchZone = (b.zone || '').toLowerCase().includes(q);
+                        const matchShops = (b.shopsNames || '').toLowerCase().includes(q);
+                        const matchNotes = (b.notes || '').toLowerCase().includes(q);
+                        return matchName || matchZone || matchShops || matchNotes;
+                    }
+                    return true;
+                })
+                .sort((a, b) => {
+                    if (currentSort === 'distance') {
+                        if (a._distanceMeters !== null && b._distanceMeters !== null) {
+                            return a._distanceMeters - b._distanceMeters;
+                        }
+                        if (a._distanceMeters !== null) return -1;
+                        if (b._distanceMeters !== null) return 1;
+                        return Number(b.rating) - Number(a.rating);
+                    }
+                    if (currentSort === 'rating') return Number(b.rating) - Number(a.rating);
+                    if (currentSort === 'shops') return (Number(b.shopsCount) || 0) - (Number(a.shopsCount) || 0);
+                    return (b.createdAt || 0) - (a.createdAt || 0);
+                });
+        }
+<!-- ... existing code ... -->
+            // Réseau
+            const netLabel = b.network === 'excellent' ? 'Réseau : Excellent' : (b.network === 'moyen' ? 'Réseau : Moyen' : 'Réseau : Faible');
+            const netColor = b.network === 'excellent' ? 'text-emerald-600' : (b.network === 'moyen' ? 'text-slate-600' : 'text-red-500');
+
+            // Affluence
+            const trafficMap = {
+                calme: '🧘 Calme',
+                moyen: '🚶 Passage moyen',
+                passant: '📢 Très passant'
+            };
+            const trafficLabel = trafficMap[b.traffic] || '🚶 Passage moyen';
+
+            // Proximités
+            const proxItems = [];
+            if (b.proximities?.coffee) proxItems.push('☕ Café');
+            if (b.proximities?.toilets) proxItems.push('🚻 Toilettes');
+            if (b.proximities?.water) proxItems.push('💧 Eau');
+            if (b.proximities?.detail) proxItems.push(escapeHTML(b.proximities.detail));
+
+            // Badge Distance GPS (si "Autour de moi" actif) ou indicateur GPS enregistré
+            const hasCoords = b.lat != null && b.lng != null && b.lat !== '' && b.lng !== '';
+            let distanceBadgeHTML = '';
+            if (b._distanceMeters !== null) {
+                distanceBadgeHTML = `
+                    <div class="absolute top-2.5 left-2.5 bg-emerald-600 text-white text-xs font-extrabold px-3 py-1 rounded-full shadow-md flex items-center gap-1 border border-emerald-400">
+                        <span>📍 ${formatDistance(b._distanceMeters)}</span>
+                    </div>
+                `;
+            } else if (hasCoords) {
+                distanceBadgeHTML = `
+                    <div class="absolute top-2.5 left-2.5 bg-slate-900/75 backdrop-blur-xs text-emerald-300 text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1">
+                        <i class="ph-fill ph-navigation-arrow"></i> GPS enregistré
+                    </div>
+                `;
+            }
+
+            // Mini-carte aperçu
+            const mapPreviewContent = b.customMapImage
+                ? `<img src="${b.customMapImage}" alt="Plan" class="w-full h-full object-cover">`
+                : getMiniSchematicSVG();
+
+            return `
+            <article class="bg-white rounded-3xl shadow-sm hover:shadow-md border border-slate-200/90 overflow-hidden flex flex-col transition-all duration-200 animate-slide-up">
+                <!-- Mini-Plan Cliquable en haut de carte -->
+                <div onclick="openZoomModal('${b.id}')" title="Cliquez pour agrandir le plan" class="relative h-32 w-full bg-slate-200 overflow-hidden cursor-zoom-in group border-b border-slate-200">
+                    ${mapPreviewContent}
+                    ${distanceBadgeHTML}
+                    <!-- Pin sur miniature -->
+                    <div style="left: ${b.pinX}%; top: ${b.pinY}%;" class="absolute -translate-x-1/2 -translate-y-full pointer-events-none drop-shadow-md">
+                        <div class="w-6 h-6 rounded-full bg-red-600 border-2 border-white flex items-center justify-center text-white">
+                            <i class="ph-fill ph-park text-xs"></i>
+                        </div>
+                    </div>
+                    <!-- Badge Agrandir -->
+                    <div class="absolute top-2.5 right-2.5 bg-slate-900/75 backdrop-blur-xs text-white text-[11px] font-semibold px-2.5 py-1 rounded-full flex items-center gap-1 opacity-90 group-hover:opacity-100 transition-opacity">
+                        <i class="ph-bold ph-magnifying-glass-plus"></i> Plan
+                    </div>
+                    <!-- Badge Note Flottant -->
+                    <div class="absolute bottom-2.5 left-2.5 bg-white/95 backdrop-blur-xs px-2.5 py-1 rounded-xl shadow-xs flex items-center gap-0.5 border border-slate-200/80">
+                        ${starsHTML}
+                    </div>
+                </div>
+
+                <!-- Corps de la carte -->
+                <div class="p-4 sm:p-5 flex-1 flex flex-col">
+                    <!-- Titre & Zone -->
+                    <div class="mb-3">
+                        <div class="flex items-center justify-between gap-2 mb-0.5">
+                            <div class="flex items-center gap-1.5 text-xs font-bold text-amber-600 uppercase tracking-wide truncate">
+                                <i class="ph-fill ph-map-pin shrink-0"></i>
+                                <span class="truncate">${escapeHTML(b.zone)}</span>
+                            </div>
+                        </div>
+                        <h3 class="text-base sm:text-lg font-extrabold text-slate-900 leading-snug">
+                            ${escapeHTML(b.name)}
+                        </h3>
+                    </div>
+
+                    <!-- Encart Contrôle des Boutiques -->
+                    <div class="bg-cream-100 rounded-2xl p-3 mb-3.5 border border-cream-200">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                                <i class="ph-fill ph-eye text-forest-700 text-base"></i>
+                                Boutiques surveillées
+                            </span>
+                            <span class="px-2.5 py-0.5 rounded-full bg-forest-800 text-white text-xs font-extrabold">
+                                ${b.shopsCount} ${b.shopsCount > 1 ? 'boutiques' : 'boutique'}
+                            </span>
+                        </div>
+                        ${b.shopsNames ? `
+                            <p class="text-xs text-slate-600 mt-1.5 font-medium truncate" title="${escapeHTML(b.shopsNames)}">
+                                👁️ ${escapeHTML(b.shopsNames)}
+                            </p>
+                        ` : ''}
+                    </div>
+
+                    <!-- Badges Critères (Dossier, Ombre, Poubelle) -->
+                    <div class="flex flex-wrap gap-1.5 mb-3">
+                        ${backrestBadge}
+                        ${shadeBadge}
+                        ${trashBadge}
+                    </div>
+
+                    <!-- Réseau, Affluence & Proximités -->
+                    <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 mb-3 pb-3 border-b border-slate-100">
+                        <span class="font-semibold ${netColor} flex items-center gap-1">
+                            <i class="ph-bold ph-cell-signal-full"></i> ${netLabel}
+                        </span>
+                        <span class="text-slate-600 font-medium">${trafficLabel}</span>
+                        ${proxItems.length > 0 ? `<span class="text-slate-600 font-medium">• ${proxItems.join(' · ')}</span>` : ''}
+                    </div>
+
+                    <!-- Notes Tactiques -->
+                    ${b.notes ? `
+                        <p class="text-xs text-slate-600 italic leading-relaxed mb-4 line-clamp-3">
+                            « ${escapeHTML(b.notes)} »
+                        </p>
+                    ` : '<div class="flex-1"></div>'}
+
+                    <!-- Barre d'actions bas de carte -->
+                    <div class="mt-auto pt-2 flex items-center justify-between gap-2">
+                        <button onclick="shareBench('${b.id}')" class="flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-cream-100 hover:bg-amber-100 text-slate-800 hover:text-amber-900 font-bold text-xs transition-colors cursor-pointer">
+                            <i class="ph-bold ph-share-network text-sm"></i>
+                            <span>Partager</span>
+                        </button>
+                        <button onclick="openModal('${b.id}')" title="Modifier" class="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors cursor-pointer">
+                            <i class="ph-bold ph-pencil-simple text-base"></i>
+                        </button>
+                        <button onclick="confirmDelete('${b.id}')" title="Supprimer" class="p-2 rounded-xl bg-slate-100 hover:bg-red-100 text-slate-500 hover:text-red-600 transition-colors cursor-pointer">
+                            <i class="ph-bold ph-trash text-base"></i>
+                        </button>
+                    </div>
+                </div>
+            </article>
+            `;
+        }
+<!-- ... existing code ... -->
+                document.getElementById('field-network').value = b.network || 'excellent';
+                document.getElementById('field-traffic').value = b.traffic || 'moyen';
+                document.getElementById('prox-toilets').checked = !!b.proximities?.toilets;
+                document.getElementById('prox-coffee').checked = !!b.proximities?.coffee;
+                document.getElementById('prox-water').checked = !!b.proximities?.water;
+                document.getElementById('field-prox-detail').value = b.proximities?.detail || '';
+                document.getElementById('field-notes').value = b.notes || '';
+                document.getElementById('field-lat').value = b.lat ?? '';
+                document.getElementById('field-lng').value = b.lng ?? '';
+                document.getElementById('gps-btn-text').textContent = '📍 Capturer ma position GPS actuelle';
+
+                // Restaurer position du pin et image de carte
+                updatePinPosition(b.pinX ?? 50, b.pinY ?? 27);
+                if (b.customMapImage) {
+                    currentCustomMapDataUrl = b.customMapImage;
+                    showCustomMapImage(b.customMapImage);
+                }
+            } else {
+                document.getElementById('modal-title').textContent = 'Nouveau Banc de Survie';
+                document.getElementById('modal-title-icon').className = 'ph-fill ph-plus-circle text-xl';
+                document.getElementById('bench-id').value = '';
+                setRating(4);
+                document.getElementById('field-shops-count').value = 2;
+                document.getElementById('field-lat').value = '';
+                document.getElementById('field-lng').value = '';
+                document.getElementById('gps-btn-text').textContent = '📍 Capturer ma position GPS actuelle';
+                updatePinPosition(50, 27);
+            }
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+<!-- ... existing code ... -->
+        // Capture GPS optionnelle dans le formulaire
+        function captureGPS() {
+            const btnText = document.getElementById('gps-btn-text');
+            if (!navigator.geolocation) {
+                showToast('La géolocalisation n’est pas supportée sur ce navigateur.', 'error');
+                return;
+            }
+            btnText.textContent = 'Recherche satellite...';
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    document.getElementById('field-lat').value = pos.coords.latitude.toFixed(6);
+                    document.getElementById('field-lng').value = pos.coords.longitude.toFixed(6);
+                    btnText.textContent = '✅ Position GPS capturée !';
+                    showToast('Coordonnées GPS enregistrées dans la fiche !');
+                },
+                () => {
+                    btnText.textContent = '📍 Capturer ma position GPS actuelle';
+                    showToast('Impossible de récupérer le GPS (autorisation refusée).', 'error');
+                },
+                { enableHighAccuracy: true, timeout: 8000 }
+            );
+        }
+
+        function clearGPSFields() {
+            document.getElementById('field-lat').value = '';
+            document.getElementById('field-lng').value = '';
+            document.getElementById('gps-btn-text').textContent = '📍 Capturer ma position GPS actuelle';
+        }
+
+        // Enregistrement du banc
+        function saveBench(event) {
+            event.preventDefault();
+            const existingId = document.getElementById('bench-id').value;
+            const rawLat = document.getElementById('field-lat').value.trim();
+            const rawLng = document.getElementById('field-lng').value.trim();
+
+            const benchData = {
+                id: existingId || 'banc-' + Date.now(),
+                name: document.getElementById('field-name').value.trim(),
+                zone: document.getElementById('field-zone').value.trim(),
+                rating: Number(document.getElementById('field-rating').value),
+                backrest: document.querySelector('input[name="backrest"]:checked').value === 'true',
+                shopsCount: Number(document.getElementById('field-shops-count').value) || 0,
+                shopsNames: document.getElementById('field-shops-names').value.trim(),
+                trash: document.querySelector('input[name="trash"]:checked').value === 'true',
+                shade: document.querySelector('input[name="shade"]:checked').value,
+                network: document.getElementById('field-network').value,
+                traffic: document.getElementById('field-traffic').value,
+                proximities: {
+                    coffee: document.getElementById('prox-coffee').checked,
+                    toilets: document.getElementById('prox-toilets').checked,
+                    water: document.getElementById('prox-water').checked,
+                    detail: document.getElementById('field-prox-detail').value.trim()
+                },
+                lat: rawLat !== '' ? Number(rawLat) : null,
+                lng: rawLng !== '' ? Number(rawLng) : null,
+                pinX: Number(document.getElementById('field-pin-x').value),
+                pinY: Number(document.getElementById('field-pin-y').value),
+                customMapImage: currentCustomMapDataUrl,
+                notes: document.getElementById('field-notes').value.trim(),
+                createdAt: existingId
+                    ? (benches.find(b => b.id === existingId)?.createdAt || Date.now())
+                    : Date.now()
+            };
+
+            if (existingId) {
+                const idx = benches.findIndex(b => b.id === existingId);
+                if (idx !== -1) benches[idx] = benchData;
+                showToast('Fiche du banc mise à jour !');
+            } else {
+                benches.unshift(benchData);
+                showToast('Nouveau banc de survie ajouté au répertoire !');
+            }
+
+            saveToStorage();
+            renderAll();
+            closeModal();
+        }
+<!-- ... existing code ... -->
+            const gpsBar = document.getElementById('zoom-gps-bar');
+            if (b.lat != null && b.lng != null && b.lat !== '' && b.lng !== '') {
+                const coordsStr = `${b.lat}, ${b.lng}`;
+                gpsBar.classList.remove('hidden');
+                document.getElementById('zoom-gps-text').textContent = coordsStr;
+                document.getElementById('zoom-gmaps-link').href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(coordsStr)}`;
+            } else {
+                gpsBar.classList.add('hidden');
+            }
+
+            const modal = document.getElementById('map-zoom-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+<!-- ... existing code ... -->
+        function handleSort(val) {
+            if (val === 'distance' && !userLocation) {
+                activateAroundMe();
+                return;
+            }
+            currentSort = val;
+            renderBenches();
+        }
+<!-- ... existing code ... -->
